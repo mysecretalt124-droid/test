@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Viewer - Vulnerable App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1e3c72;
+            padding: 20px;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        .box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .warning {
+            background: #ff4444;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: 70%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .content {
+            background: #f5f5f5;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="warning">⚠️ VULNERABLE TEST APPLICATION</div>
+        <div class="box">
+            <h1>File Viewer <span style="background: #ff6600; color: white; padding: 3px 10px; border-radius: 3px; font-size: 12px;">LFI</span></h1>
+            <p style="color: #666; margin-bottom: 20px;">View system files (try: ../../../etc/passwd)</p>
+            
+            <input type="text" id="filename" placeholder="Enter filename...">
+            <button onclick="viewFile()">View File</button>
+            
+            <div id="fileContent" class="content" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        function viewFile() {
+            const filename = document.getElementById('filename').value;
+            const content = document.getElementById('fileContent');
+            
+            content.style.display = 'block';
+            
+            // VULNERABLE: No path validation
+            if (filename.includes('passwd') || filename.includes('hosts')) {
+                content.innerHTML = '<span style="color: red;">root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/bin/sh\nbin:x:2:2:bin:/bin:/bin/sh\nsys:x:3:3:sys:/dev:/bin/sh\nsync:x:4:65534:sync:/bin:/bin/sync\n</span>\n\nFlag: LFI_VULNERABILITY_FOUND';
+            } else if (filename.includes('flag') || filename.includes('secret')) {
+                content.innerHTML = 'FLAG{LFI_EXPLOIT_SUCCESS}\n\nDatabase credentials:\nHost: localhost\nUser: admin\nPass: SuperSecret123!';
+            } else if (filename.includes('config') || filename.includes('.env')) {
+                content.innerHTML = 'DB_HOST=localhost\nDB_USER=root\nDB_PASS=toor\nAPI_KEY=sk-1234567890\n\nFlag: CONFIG_EXPOSED';
+            } else {
+                content.textContent = 'File: ' + filename + '\n\n[File contents would appear here]';
+            }
+        }
+    </script>
+</body>
+</html>
