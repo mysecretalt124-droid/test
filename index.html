@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vulnerable Test App - Security Testing</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .warning {
+            background: #ff4444;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .box {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        h1 { color: #333; margin-bottom: 10px; }
+        h2 { color: #666; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background: #45a049; }
+        .result {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border-left: 4px solid #4CAF50;
+        }
+        .vuln-label {
+            background: #ff6600;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .nav {
+            background: #333;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .nav a {
+            color: white;
+            text-decoration: none;
+            margin-right: 20px;
+            padding: 8px 15px;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        .nav a:hover { background: #555; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="warning">
+            ⚠️ WARNING: This application is INTENTIONALLY VULNERABLE for security testing purposes only!
+        </div>
+        
+        <div class="nav">
+            <a href="index.html">Home</a>
+            <a href="search.html">Search</a>
+            <a href="admin.html">Admin</a>
+            <a href="file.html">File Viewer</a>
+        </div>
+
+        <div class="box">
+            <h1>Vulnerable Test Application</h1>
+            <p style="color: #666; margin-bottom: 20px;">Test your scanner against these intentional vulnerabilities</p>
+        </div>
+
+        <!-- SQL INJECTION VULNERABILITY -->
+        <div class="box">
+            <h2>Login Form <span class="vuln-label">SQL INJECTION</span></h2>
+            <form action="#" onsubmit="return handleLogin()">
+                <input type="text" id="username" placeholder="Username (try: admin' OR '1'='1)">
+                <input type="password" id="password" placeholder="Password">
+                <button type="submit">Login</button>
+            </form>
+            <div id="loginResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- XSS VULNERABILITY -->
+        <div class="box">
+            <h2>Guestbook <span class="vuln-label">XSS</span></h2>
+            <textarea id="comment" rows="3" placeholder="Leave a comment (try: <script>alert('XSS')</script>)"></textarea>
+            <button onclick="addComment()">Post Comment</button>
+            <div id="comments"></div>
+        </div>
+
+        <!-- COMMAND INJECTION -->
+        <div class="box">
+            <h2>Network Tools <span class="vuln-label">COMMAND INJECTION</span></h2>
+            <input type="text" id="host" placeholder="Enter IP to ping (try: 127.0.0.1; whoami)">
+            <button onclick="pingHost()">Ping</button>
+            <div id="pingResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- LFI VULNERABILITY -->
+        <div class="box">
+            <h2>Load Page <span class="vuln-label">LFI</span></h2>
+            <input type="text" id="page" placeholder="Page name (try: ../../../etc/passwd)">
+            <button onclick="loadPage()">Load</button>
+            <div id="pageContent" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Fake database for SQL injection demo
+        const users = [
+            { username: 'admin', password: 'admin123' },
+            { username: 'user', password: 'password' }
+        ];
+
+        // SQL Injection Vulnerable Login
+        function handleLogin() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const result = document.getElementById('loginResult');
+            
+            // VULNERABLE: Direct string comparison without sanitization
+            if (user.includes("' OR '1'='1") || user.includes("' OR 1=1") || 
+                (user === 'admin' && pass === 'admin123')) {
+                result.style.display = 'block';
+                result.style.borderLeftColor = '#4CAF50';
+                result.innerHTML = '<strong>✓ Login Successful!</strong><br>Welcome, admin!<br>Flag: SQL_INJECTION_FOUND';
+            } else {
+                result.style.display = 'block';
+                result.style.borderLeftColor = '#ff4444';
+                result.innerHTML = '<strong>✗ Login Failed</strong><br>Try: admin\' OR \'1\'=\'1';
+            }
+            return false;
+        }
+
+        // XSS Vulnerable Comment System
+        function addComment() {
+            const comment = document.getElementById('comment').value;
+            const commentsDiv = document.getElementById('comments');
+            
+            // VULNERABLE: Direct innerHTML without sanitization
+            const newComment = document.createElement('div');
+            newComment.className = 'result';
+            newComment.style.marginTop = '10px';
+            newComment.innerHTML = '<strong>Guest:</strong> ' + comment;
+            commentsDiv.appendChild(newComment);
+            
+            document.getElementById('comment').value = '';
+        }
+
+        // Command Injection Vulnerable Ping
+        function pingHost() {
+            const host = document.getElementById('host').value;
+            const result = document.getElementById('pingResult');
+            
+            // VULNERABLE: Simulated command execution
+            result.style.display = 'block';
+            if (host.includes(';') || host.includes('|') || host.includes('`')) {
+                result.innerHTML = '<strong>Command Output:</strong><br>PING ' + host + '<br>' +
+                    'Reply from 127.0.0.1: bytes=32 time<1ms TTL=128<br>' +
+                    '<span style="color:red;">root<br>uid=0(root) gid=0(root)</span><br>' +
+                    'Flag: COMMAND_INJECTION_FOUND';
+            } else {
+                result.innerHTML = '<strong>Ping Results:</strong><br>Pinging ' + host + '...<br>' +
+                    'Reply from ' + host + ': bytes=32 time=1ms';
+            }
+        }
+
+        // LFI Vulnerable Page Loader
+        function loadPage() {
+            const page = document.getElementById('page').value;
+            const result = document.getElementById('pageContent');
+            
+            // VULNERABLE: No path validation
+            result.style.display = 'block';
+            if (page.includes('etc/passwd') || page.includes('windows')) {
+                result.innerHTML = '<strong>File Contents:</strong><br><pre>' +
+                    'root:x:0:0:root:/root:/bin/bash<br>' +
+                    'daemon:x:1:1:daemon:/usr/sbin:/bin/sh<br>' +
+                    'bin:x:2:2:bin:/bin:/bin/sh<br>' +
+                    '...</pre><br>Flag: LFI_FOUND';
+            } else if (page.includes('flag') || page.includes('secret')) {
+                result.innerHTML = '<strong>File Contents:</strong><br>Flag: LFI_FOUND<br>Secret data exposed!';
+            } else {
+                result.innerHTML = '<strong>Loaded:</strong> ' + page + '.html<br>Content: [Normal page content]';
+            }
+        }
+    </script>
+</body>
+</html>
