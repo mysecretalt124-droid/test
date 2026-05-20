@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Vulnerable App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1e3c72;
+            padding: 20px;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        .box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .warning {
+            background: #ff4444;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .secret { background: #ffeb3b; padding: 20px; border-radius: 5px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="warning">⚠️ VULNERABLE TEST APPLICATION</div>
+        <div class="box">
+            <h1>Admin Panel</h1>
+            <p>User ID: <span id="userId"></span></p>
+            <div id="content"></div>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('id') || '1';
+        
+        document.getElementById('userId').textContent = id;
+        
+        // VULNERABLE: IDOR - No authorization check
+        if (id === '1') {
+            document.getElementById('content').innerHTML = 
+                '<p>Welcome, regular user!</p>';
+        } else if (id === '999' || id === 'admin') {
+            document.getElementById('content').innerHTML = 
+                '<div class="secret"><h2>🎉 ADMIN ACCESS GRANTED!</h2>' +
+                '<p>Flag: IDOR_VULNERABILITY_FOUND</p>' +
+                '<p>Secret API Key: sk-live-5120948092480982409824</p></div>';
+        } else {
+            document.getElementById('content').innerHTML = 
+                '<p>User data for ID: ' + id + '</p>';
+        }
+    </script>
+</body>
+</html>
